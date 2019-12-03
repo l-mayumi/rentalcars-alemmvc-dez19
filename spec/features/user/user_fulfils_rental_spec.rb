@@ -25,6 +25,7 @@ feature 'User fulfils rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Iniciar Locação'
 
     expect(page).to have_content(rental.reservation_code)
     expect(page).to have_content('Data de início: 08 de janeiro de 3000')
@@ -74,6 +75,7 @@ feature 'User fulfils rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Iniciar Locação'
     choose 'TLA-090'
     click_on 'Iniciar locação'
 
@@ -118,6 +120,7 @@ feature 'User fulfils rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Iniciar Locação'
     find(:css, '#TLA-090').click
     find(:css, '#1').click
     find(:css, '#2').click
@@ -156,6 +159,7 @@ feature 'User fulfils rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Iniciar Locação'
     click_on 'Iniciar locação'
 
     expect(page).to have_content('Carro deve ser selecionado')
@@ -194,6 +198,7 @@ feature 'User fulfils rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Iniciar Locação'
     find(:css, '#TLA-090').click
     find(:css, '#1').click
     find(:css, '#2').click
@@ -230,7 +235,7 @@ feature 'User fulfils rental' do
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
 
-    expect(page).not_to have_button('Iniciar locação')
+    expect(page).not_to have_link('Iniciar Locação')
   end
 
   scenario 'and only shows cars from current subsidiary' do
@@ -258,6 +263,7 @@ feature 'User fulfils rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Iniciar Locação'
 
     expect(page).to have_content('MVM-8383')
     expect(page).not_to have_content('TLA-0909')

@@ -20,6 +20,7 @@ feature 'User finalizes rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Encerrar Locação'
 
     expect(page).to have_content(rental.reservation_code)
     expect(page).to have_content('Data de início: 01 de janeiro de 3000')
@@ -50,6 +51,7 @@ feature 'User finalizes rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Encerrar Locação'
     click_on 'Finalizar locação'
 
     expect(page).to have_content('Status: finalizada')
@@ -85,6 +87,7 @@ feature 'User finalizes rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
+    click_on 'Encerrar Locação'
     click_on 'Finalizar locação'
 
     expect(page).to have_content('Status: finalizada')
@@ -110,8 +113,8 @@ feature 'User finalizes rental' do
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
 
-    expect(page).not_to have_button('Finalizar locação')
-    expect(page).to have_button('Iniciar locação')
+    expect(page).not_to have_link('Encerrar locação')
+    expect(page).to have_link('Iniciar Locação')
   end
 
   scenario 'and can be finalized by user in different subsidiary' do
@@ -131,10 +134,7 @@ feature 'User finalizes rental' do
     click_on 'Locações'
     fill_in 'Código da reserva', with: rental.reservation_code
     click_on 'Buscar'
-    click_on 'Finalizar locação'
 
-    expect(page).to have_content('Status: finalizada')
-    expect(car.reload).to be_pending_inspection
-    expect(rental.reload).to be_finalized
+    expect(page).not_to have_button('Encerrar locação')
   end
 end

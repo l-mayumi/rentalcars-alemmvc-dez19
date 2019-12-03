@@ -1,5 +1,8 @@
 <h1>Locação de:  <%= @rental.client.name %></h1>
-<h3>Status: <%= @rental.status %></h3>
+<h3>Status:
+  <%= @rental.status_badge %>
+</h3>
+
 <p><%= Rental.human_attribute_name('reservation_code') %>: <%= @rental.reservation_code %></p>
 <p><%= Client.human_attribute_name('email') %>: <%= @rental.client.email %></p>
 <p>CPF/CNPJ: <%= @rental.client.cpf %></p>
@@ -8,3 +11,15 @@
 <p><%= Rental.human_attribute_name('subsidiary') %>: <%= @rental.subsidiary.name %>
 <p><%= Rental.human_attribute_name('category') %>: <%= @rental.category.name  %>
 <p><%= Rental.human_attribute_name('price_projection') %>: <%= number_to_currency(@rental.calculate_price_projection) %>
+
+<% if current_user.admin? || current_user.subsidiary == @rental.subsidiary %>
+  <% if @rental.scheduled? %>
+    <%= link_to 'Iniciar Locação', review_rental_path(@rental) %>
+  <% elsif @rental.ongoing? %>
+    <%= link_to 'Encerrar Locação', closure_review_rental_path(@rental) %>
+  <% elsif @rental.in_review? %>
+    <%= link_to 'Continuar Locação', review_rental_path(@rental) %>
+  <% elsif @rental.finalized? && current_user.admin? %>
+    <%= link_to 'Reportar Problema', report_rental_path(@rental) %>
+  <% end %>
+<% end %>

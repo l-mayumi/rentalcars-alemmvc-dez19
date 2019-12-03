@@ -1,0 +1,65 @@
+diff --git i/app/controllers/rentals_controller.rb w/app/controllers/rentals_controller.rb
+index 9f5505b..32dd8f1 100644
+--- i/app/controllers/rentals_controller.rb
++++ w/app/controllers/rentals_controller.rb
+@@ -57,20 +57,18 @@ class RentalsController < ApplicationController
+ 
+   def search
+     rental = Rental.find_by(reservation_code: params[:q])
+-    return redirect_to review_rental_path(rental) if rental
++    redirect_to rental if rental
+   end
+ 
+   def review
+     rental = Rental.find(params[:id])
+-    if rental.scheduled?
+-      rental.in_review!
+-      @cars = rental.available_cars.where(subsidiary: current_subsidiary)
+-      @addons = Addon.joins(:addon_items)
+-                     .where(addon_items: { status: :available }).group(:id)
+-      @rental = RentalPresenter.new(rental)
+-    elsif rental.ongoing?
+-      redirect_to closure_review_rental_path(rental)
+-    end
++    return redirect_to closure_review_rental_path(rental) if rental.ongoing?
++
++    rental.in_review! if rental.scheduled?
++    @cars = rental.available_cars.where(subsidiary: current_subsidiary)
++    @addons = Addon.joins(:addon_items)
++                    .where(addon_items: { status: :available }).group(:id)
++    @rental = RentalPresenter.new(rental)
+   end
+ 
+   def closure_review
+diff --git i/app/views/rentals/show.html.erb w/app/views/rentals/show.html.erb
+index 9a41258..53e7d8c 100644
+--- i/app/views/rentals/show.html.erb
++++ w/app/views/rentals/show.html.erb
+@@ -11,3 +11,15 @@
+ <p><%= Rental.human_attribute_name('subsidiary') %>: <%= @rental.subsidiary.name %>
+ <p><%= Rental.human_attribute_name('category') %>: <%= @rental.category.name  %>
+ <p><%= Rental.human_attribute_name('price_projection') %>: <%= number_to_currency(@rental.calculate_price_projection) %>
++
++<% if current_user.admin? || current_subsidiary == @rental.subsidiary %>
++  <% if @rental.scheduled? %>
++    <%= link_to 'Iniciar Locação', review_rental_path(@rental) %>
++  <% elsif @rental.ongoing? %>
++    <%= link_to 'Encerrar Locação', closure_review_rental_path(@rental) %>
++  <% elsif @rental.in_review %>
++    <%= link_to 'Continuar Locação', review_rental_path(@rental) %>
++  <% elsif @rental.finalized? && current_user.admin? %>
++    <%= link_to 'Reportar Problema', report_rental_path(@rental) %>
++  <% end %>
++<% end %>
+diff --git i/config/routes.rb w/config/routes.rb
+index 89c1e28..498935f 100644
+--- i/config/routes.rb
++++ w/config/routes.rb
+@@ -24,6 +24,7 @@ Rails.application.routes.draw do
+       post 'start'
+       get 'closure_review'
+       post 'finalize'
++      get 'report'
+     end
+   end
+ 

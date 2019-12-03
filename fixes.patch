@@ -1,0 +1,248 @@
+diff --git c/app/controllers/rentals_controller.rb w/app/controllers/rentals_controller.rb
+index 9f5505b..32dd8f1 100644
+--- c/app/controllers/rentals_controller.rb
++++ w/app/controllers/rentals_controller.rb
+@@ -57,20 +57,18 @@ class RentalsController < ApplicationController
+ 
+   def search
+     rental = Rental.find_by(reservation_code: params[:q])
+-    return redirect_to review_rental_path(rental) if rental
++    redirect_to rental if rental
+   end
+ 
+   def review
+     rental = Rental.find(params[:id])
+-    if rental.scheduled?
+-      rental.in_review!
+-      @cars = rental.available_cars.where(subsidiary: current_subsidiary)
+-      @addons = Addon.joins(:addon_items)
+-                     .where(addon_items: { status: :available }).group(:id)
+-      @rental = RentalPresenter.new(rental)
+-    elsif rental.ongoing?
+-      redirect_to closure_review_rental_path(rental)
+-    end
++    return redirect_to closure_review_rental_path(rental) if rental.ongoing?
++
++    rental.in_review! if rental.scheduled?
++    @cars = rental.available_cars.where(subsidiary: current_subsidiary)
++    @addons = Addon.joins(:addon_items)
++                    .where(addon_items: { status: :available }).group(:id)
++    @rental = RentalPresenter.new(rental)
+   end
+ 
+   def closure_review
+diff --git c/app/views/rentals/show.html.erb w/app/views/rentals/show.html.erb
+index 9a41258..699fe88 100644
+--- c/app/views/rentals/show.html.erb
++++ w/app/views/rentals/show.html.erb
+@@ -11,3 +11,15 @@
+ <p><%= Rental.human_attribute_name('subsidiary') %>: <%= @rental.subsidiary.name %>
+ <p><%= Rental.human_attribute_name('category') %>: <%= @rental.category.name  %>
+ <p><%= Rental.human_attribute_name('price_projection') %>: <%= number_to_currency(@rental.calculate_price_projection) %>
++
++<% if current_user.admin? || current_user.subsidiary == @rental.subsidiary %>
++  <% if @rental.scheduled? %>
++    <%= link_to 'Iniciar Locação', review_rental_path(@rental) %>
++  <% elsif @rental.ongoing? %>
++    <%= link_to 'Encerrar Locação', closure_review_rental_path(@rental) %>
++  <% elsif @rental.in_review? %>
++    <%= link_to 'Continuar Locação', review_rental_path(@rental) %>
++  <% elsif @rental.finalized? && current_user.admin? %>
++    <%= link_to 'Reportar Problema', report_rental_path(@rental) %>
++  <% end %>
++<% end %>
+diff --git c/config/routes.rb w/config/routes.rb
+index 89c1e28..498935f 100644
+--- c/config/routes.rb
++++ w/config/routes.rb
+@@ -24,6 +24,7 @@ Rails.application.routes.draw do
+       post 'start'
+       get 'closure_review'
+       post 'finalize'
++      get 'report'
+     end
+   end
+ 
+diff --git c/rental.patch w/rental.patch
+new file mode 100644
+index 0000000..d52d438
+--- /dev/null
++++ w/rental.patch
+@@ -0,0 +1,65 @@
++diff --git i/app/controllers/rentals_controller.rb w/app/controllers/rentals_controller.rb
++index 9f5505b..32dd8f1 100644
++--- i/app/controllers/rentals_controller.rb
+++++ w/app/controllers/rentals_controller.rb
++@@ -57,20 +57,18 @@ class RentalsController < ApplicationController
++ 
++   def search
++     rental = Rental.find_by(reservation_code: params[:q])
++-    return redirect_to review_rental_path(rental) if rental
+++    redirect_to rental if rental
++   end
++ 
++   def review
++     rental = Rental.find(params[:id])
++-    if rental.scheduled?
++-      rental.in_review!
++-      @cars = rental.available_cars.where(subsidiary: current_subsidiary)
++-      @addons = Addon.joins(:addon_items)
++-                     .where(addon_items: { status: :available }).group(:id)
++-      @rental = RentalPresenter.new(rental)
++-    elsif rental.ongoing?
++-      redirect_to closure_review_rental_path(rental)
++-    end
+++    return redirect_to closure_review_rental_path(rental) if rental.ongoing?
+++
+++    rental.in_review! if rental.scheduled?
+++    @cars = rental.available_cars.where(subsidiary: current_subsidiary)
+++    @addons = Addon.joins(:addon_items)
+++                    .where(addon_items: { status: :available }).group(:id)
+++    @rental = RentalPresenter.new(rental)
++   end
++ 
++   def closure_review
++diff --git i/app/views/rentals/show.html.erb w/app/views/rentals/show.html.erb
++index 9a41258..53e7d8c 100644
++--- i/app/views/rentals/show.html.erb
+++++ w/app/views/rentals/show.html.erb
++@@ -11,3 +11,15 @@
++ <p><%= Rental.human_attribute_name('subsidiary') %>: <%= @rental.subsidiary.name %>
++ <p><%= Rental.human_attribute_name('category') %>: <%= @rental.category.name  %>
++ <p><%= Rental.human_attribute_name('price_projection') %>: <%= number_to_currency(@rental.calculate_price_projection) %>
+++
+++<% if current_user.admin? || current_subsidiary == @rental.subsidiary %>
+++  <% if @rental.scheduled? %>
+++    <%= link_to 'Iniciar Locação', review_rental_path(@rental) %>
+++  <% elsif @rental.ongoing? %>
+++    <%= link_to 'Encerrar Locação', closure_review_rental_path(@rental) %>
+++  <% elsif @rental.in_review %>
+++    <%= link_to 'Continuar Locação', review_rental_path(@rental) %>
+++  <% elsif @rental.finalized? && current_user.admin? %>
+++    <%= link_to 'Reportar Problema', report_rental_path(@rental) %>
+++  <% end %>
+++<% end %>
++diff --git i/config/routes.rb w/config/routes.rb
++index 89c1e28..498935f 100644
++--- i/config/routes.rb
+++++ w/config/routes.rb
++@@ -24,6 +24,7 @@ Rails.application.routes.draw do
++       post 'start'
++       get 'closure_review'
++       post 'finalize'
+++      get 'report'
++     end
++   end
++ 
+diff --git c/spec/features/user/user_finalizes_rental_spec.rb w/spec/features/user/user_finalizes_rental_spec.rb
+index 51edc3d..e10dd1d 100644
+--- c/spec/features/user/user_finalizes_rental_spec.rb
++++ w/spec/features/user/user_finalizes_rental_spec.rb
+@@ -20,6 +20,7 @@ feature 'User finalizes rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Encerrar Locação'
+ 
+     expect(page).to have_content(rental.reservation_code)
+     expect(page).to have_content('Data de início: 01 de janeiro de 3000')
+@@ -50,6 +51,7 @@ feature 'User finalizes rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Encerrar Locação'
+     click_on 'Finalizar locação'
+ 
+     expect(page).to have_content('Status: finalizada')
+@@ -85,6 +87,7 @@ feature 'User finalizes rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Encerrar Locação'
+     click_on 'Finalizar locação'
+ 
+     expect(page).to have_content('Status: finalizada')
+@@ -110,8 +113,8 @@ feature 'User finalizes rental' do
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
+ 
+-    expect(page).not_to have_button('Finalizar locação')
+-    expect(page).to have_button('Iniciar locação')
++    expect(page).not_to have_link('Encerrar locação')
++    expect(page).to have_link('Iniciar Locação')
+   end
+ 
+   scenario 'and can be finalized by user in different subsidiary' do
+@@ -131,10 +134,7 @@ feature 'User finalizes rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
+-    click_on 'Finalizar locação'
+ 
+-    expect(page).to have_content('Status: finalizada')
+-    expect(car.reload).to be_pending_inspection
+-    expect(rental.reload).to be_finalized
++    expect(page).not_to have_button('Encerrar locação')
+   end
+ end
+diff --git c/spec/features/user/user_fulfils_rental_spec.rb w/spec/features/user/user_fulfils_rental_spec.rb
+index cb27baf..be93147 100644
+--- c/spec/features/user/user_fulfils_rental_spec.rb
++++ w/spec/features/user/user_fulfils_rental_spec.rb
+@@ -25,6 +25,7 @@ feature 'User fulfils rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Iniciar Locação'
+ 
+     expect(page).to have_content(rental.reservation_code)
+     expect(page).to have_content('Data de início: 08 de janeiro de 3000')
+@@ -74,6 +75,7 @@ feature 'User fulfils rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Iniciar Locação'
+     choose 'TLA-090'
+     click_on 'Iniciar locação'
+ 
+@@ -118,6 +120,7 @@ feature 'User fulfils rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Iniciar Locação'
+     find(:css, '#TLA-090').click
+     find(:css, '#1').click
+     find(:css, '#2').click
+@@ -156,6 +159,7 @@ feature 'User fulfils rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Iniciar Locação'
+     click_on 'Iniciar locação'
+ 
+     expect(page).to have_content('Carro deve ser selecionado')
+@@ -194,6 +198,7 @@ feature 'User fulfils rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Iniciar Locação'
+     find(:css, '#TLA-090').click
+     find(:css, '#1').click
+     find(:css, '#2').click
+@@ -230,7 +235,7 @@ feature 'User fulfils rental' do
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
+ 
+-    expect(page).not_to have_button('Iniciar locação')
++    expect(page).not_to have_link('Iniciar Locação')
+   end
+ 
+   scenario 'and only shows cars from current subsidiary' do
+@@ -258,6 +263,7 @@ feature 'User fulfils rental' do
+     click_on 'Locações'
+     fill_in 'Código da reserva', with: rental.reservation_code
+     click_on 'Buscar'
++    click_on 'Iniciar Locação'
+ 
+     expect(page).to have_content('MVM-8383')
+     expect(page).not_to have_content('TLA-0909')

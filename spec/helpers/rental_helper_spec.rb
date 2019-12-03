@@ -10,12 +10,13 @@ describe RentalHelper do
       expect(result).to eq('<span class="badge badge-primary">agendada</span>')
     end
 
-    it 'should render sucess badge' do
+    it 'should render success badge' do
       rental = build(:rental, status: :finalized)
 
       result = helper.status_badge(rental)
 
       expect(result).to eq('<span class="badge badge-success">finalizada</span>')
     end
+
   end
 end

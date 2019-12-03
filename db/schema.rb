@@ -1,5 +1,22 @@
 # This file is auto-generated from the current state of the database. Instead
-# of editing this file, please use the migrations feature of Active Record to
+#require 'rails_helper'
+
+feature 'Admin edits manufacture' do
+  scenario 'successfully' do
+    user = create(:user, role: :admin)
+    create(:manufacture, name: 'Fiat')
+    login_as user, scope: :user
+    visit root_path
+    click_on 'Fabricantes'
+    click_on 'Fiat'
+    click_on 'Editar'
+    fill_in 'Nome', with: 'Honda'
+    click_on 'Enviar'
+
+    expect(page).to have_content('Honda')
+  end
+
+ of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
 # Note that this schema.rb definition is the authoritative source for your

@@ -1,27 +1,13 @@
 class RentalPresenter < SimpleDelegator
-  attr_reader :rental
+  delegate :content_tag, to: :helper
 
   def initialize(rental)
     super(rental)
   end
 
-  def status
-    if scheduled?
-      helper.content_tag :span, class: "badge badge-primary" do
-        'agendada'
-      end
-    elsif in_review?
-      helper.content_tag :span, class: 'badge badge-secondary' do
-        'em revisão'
-      end
-    elsif ongoing?
-      helper.content_tag :span, class: 'badge badge-warning' do
-        'em andamento'
-      end
-    elsif finalized?
-      helper.content_tag :span, class: 'badge badge-success' do
-        'finalizada'
-      end
+  def status_badge
+    content_tag :span, class: "badge badge-#{status_class}" do
+      I18n.translate(status.to_s)
     end
   end
 
@@ -29,5 +15,16 @@ class RentalPresenter < SimpleDelegator
 
   def helper
     ApplicationController.helpers
+  end
+
+  def status_class
+    status_classes = {
+      scheduled: 'primary',
+      ongoing: 'info',
+      in_review: '',
+      finalized: 'success'
+    }
+
+    status_classes[status.to_sym]
   end
 end

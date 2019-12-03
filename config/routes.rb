@@ -24,6 +24,7 @@ Rails.application.routes.draw do
       post 'start'
       get 'closure_review'
       post 'finalize'
+      get 'report'
     end
   end
 

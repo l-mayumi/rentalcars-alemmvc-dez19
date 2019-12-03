@@ -45,6 +45,7 @@ class RentalsController < ApplicationController
       flash[:danger] = "Carro deve ser selecionado"
       @cars = @rental.available_cars
       @addons = Addon.joins(:addon_items).where(addon_items: { status: :available }).group(:id)
+      @rental = RentalPresenter.new(@rental)
       render :review
     end
   end
@@ -55,20 +56,19 @@ class RentalsController < ApplicationController
   end
 
   def search
-    @rental = Rental.find_by(reservation_code: params[:q])
-    return redirect_to review_rental_path(@rental) if @rental
+    rental = Rental.find_by(reservation_code: params[:q])
+    redirect_to rental if rental
   end
 
   def review
-    @rental = Rental.find(params[:id])
-    if @rental.scheduled?
-      @rental.in_review!
-      @cars = @rental.available_cars.where(subsidiary: current_subsidiary)
-      @addons = Addon.joins(:addon_items)
-                     .where(addon_items: { status: :available }).group(:id)
-    elsif @rental.ongoing?
-      redirect_to closure_review_rental_path(@rental)
-    end
+    rental = Rental.find(params[:id])
+    return redirect_to closure_review_rental_path(rental) if rental.ongoing?
+
+    rental.in_review! if rental.scheduled?
+    @cars = rental.available_cars.where(subsidiary: current_subsidiary)
+    @addons = Addon.joins(:addon_items)
+                    .where(addon_items: { status: :available }).group(:id)
+    @rental = RentalPresenter.new(rental)
   end
 
   def closure_review
