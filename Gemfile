@@ -4,6 +4,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '2.6.3'
 
 gem 'active_storage_validations'
+gem 'draper'
 gem 'rails', '~> 5.2.3'
 gem 'sqlite3'
 gem 'puma', '~> 3.11'

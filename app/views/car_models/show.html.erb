@@ -23,9 +23,7 @@
 
 <dt class="col-sm-3">Características</dt>
   <dd class="col-sm-9">
-    <% @car_model.car_options.split(',') do |option| %>
-      <p><%= option %></p>
-    <% end %>
+    <%= @car_model.car_options %>
   </dd>
   
   <dd class="col-sm-9"><%= link_to 'Editar', edit_car_model_path, class: 'btn btn-primary' %></dd>
