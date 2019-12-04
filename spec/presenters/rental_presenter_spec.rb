@@ -105,7 +105,8 @@ describe RentalPresenter do
         rental = create(:rental, status: :finalized, category: category, 
                         subsidiary: subsidiary, start_date: 1.day.from_now,
                         end_date: 10.days.from_now)
-        result = RentalPresenter.new(rental).current_action
+        user = nil
+        result = RentalPresenter.new(rental, user).current_action
         expect(result).to eq ""
       end
     end

@@ -5,7 +5,7 @@ class RentalPresenter < SimpleDelegator
 
   def initialize(rental, user, authorizer = RentalActionsPolicy)
     super(rental)
-    @user = user || nil
+    @user = user || NilUser.new
     @authorizer = authorizer
   end
 
