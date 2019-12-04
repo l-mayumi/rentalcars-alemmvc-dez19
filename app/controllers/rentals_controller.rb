@@ -45,14 +45,14 @@ class RentalsController < ApplicationController
       flash[:danger] = "Carro deve ser selecionado"
       @cars = @rental.available_cars
       @addons = Addon.joins(:addon_items).where(addon_items: { status: :available }).group(:id)
-      @rental = RentalPresenter.new(@rental)
+      @rental = RentalPresenter.new(@rental, current_user)
       render :review
     end
   end
 
   def show
     rental = Rental.find(params[:id])
-    @rental = RentalPresenter.new(rental)
+    @rental = RentalPresenter.new(rental, current_user)
   end
 
   def search
@@ -68,7 +68,7 @@ class RentalsController < ApplicationController
     @cars = rental.available_cars.where(subsidiary: current_subsidiary)
     @addons = Addon.joins(:addon_items)
                     .where(addon_items: { status: :available }).group(:id)
-    @rental = RentalPresenter.new(rental)
+    @rental = RentalPresenter.new(rental, current_user)
   end
 
   def closure_review

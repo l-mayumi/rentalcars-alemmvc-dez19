@@ -12,14 +12,4 @@
 <p><%= Rental.human_attribute_name('category') %>: <%= @rental.category.name  %>
 <p><%= Rental.human_attribute_name('price_projection') %>: <%= number_to_currency(@rental.calculate_price_projection) %>
 
-<% if current_user.admin? || current_user.subsidiary == @rental.subsidiary %>
-  <% if @rental.scheduled? %>
-    <%= link_to 'Iniciar Locação', review_rental_path(@rental) %>
-  <% elsif @rental.ongoing? %>
-    <%= link_to 'Encerrar Locação', closure_review_rental_path(@rental) %>
-  <% elsif @rental.in_review? %>
-    <%= link_to 'Continuar Locação', review_rental_path(@rental) %>
-  <% elsif @rental.finalized? && current_user.admin? %>
-    <%= link_to 'Reportar Problema', report_rental_path(@rental) %>
-  <% end %>
-<% end %>
+<%= @rental.current_action %>
