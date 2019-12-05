@@ -20,15 +20,8 @@ class SubsidiariesController < ApplicationController
   end
 
   def create
-    @subsidiary = Subsidiary.new(subsidiary_params)
-    @categories = Category.all
-    @categories.each do |category|
-      RentalPrice.create!(category: category, subsidiary: @subsidiary,
-                         daily_rate: category.daily_rate,
-                         daily_car_insurance: category.car_insurance,
-                         daily_third_party_insurance: category.third_party_insurance)
-    end
-    if @subsidiary.save
+    @subsidiary = SubsidiaryCreator.new(subsidiary_params).create()
+    if @subsidiary.persisted?
       flash[:success] = 'Valores das diárias devem ser configurados'
       return redirect_to @subsidiary
     else
